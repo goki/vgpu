@@ -2,6 +2,26 @@
 
 **Mac Installation prerequisite:** https://vulkan.lunarg.com/sdk/home -- download the Vulkan SDK installer for the mac.  Unfortunately there does not appear to be a full version of this on homebrew -- the `molten-vk` package is not enough by itself.
 
+**IMPORTANT:** This is the `cogentcore` branch that was developed for the [cogentcore](https://github.com/cogentcore/core) framework, which also includes the **gosl** "go as a shader language" package, which converts Go to the HLSL shader language for compilation on the GPU. Cogent Core has now switched to using WebGPU instead of Vulkan, so this Vulkan-based code is **no longer being used or maintained.**
+
+The `main` branch of `vgpu` is the original v1 version of vGPU, which works with the original v1 version of [goki](https://github.com/goki/gi).
+
+## Major design problems with vGPU
+
+In the process of rewriting the WebGPU version in Cogent Core, called `gpu`, much was improved about the overall design and implementation, particularly in these areas:
+
+1. `vgpu` uses shared memory buffers and a separate `Memory` management system for all values, which requires all values to be sync'd to / from the GPU together, and adds considerable complexity to the overall implementation.  Everything uses dynamic offsets by default.  Later, an even more complex mechanism for splitting the Storage memory into separate chunks was introduced.  In `gpu`, each `Value` has its own buffer by default, and dynamic offset is only optionally enabled for specific Values, and the Value directly manages everything -- much simpler and cleaner.
+
+2. `vgpu` uses dynamically indexed `Texture`s, which has a limit of 16 on the mac, so considerable complexity was introduced to pack a bunch of images into these 16 images, via the `szalloc` package.  In `gpu`, we just call Bind to update which current texture is being used -- this is very fast and is the standard way of doing things, so you typically only need a single active texture variable at a time.  Major "doh" moment there.
+
+3. `vgpu` has a bunch of confusing complexity around the vulkan `DescSet` concept, which is confusing in relation to the `VarSet`.  In `gpu`, variable sets are now `VarGroup`, and you just manage multiple instances using as many Value instances as you want for each Var.  The DescSet was also conflated with the texture packing thing, and there are only 3 desc sets supported, so overall that system was just plain bad and unnecessary.
+
+So, if anyone ever did want to actually use this vulkan-based version, it would be good to fix these issues and make it work more like the current Cogent Core `gpu` version.  Basically, you'd start with `gpu` and just back-port all the vulkan impl from this `vgpu` version.
+
+But so far, `WebGPU` is proving to be much simpler and just as performant as Vulkan, with significantly fewer hassels on the main Windows and Mac platforms (because it goes direct to native GPU frameworks there), and it works on the Web, which Vulkan never will, so there isn't much reason to go back to Vulkan at this point.
+
+# Overview
+
 vGPU is a Vulkan-based framework for both Graphics and Compute Engine use of GPU hardware, in the Go langauge.  It uses the basic cgo-based Go bindings to Vulkan in [vulkan-go](https://github.com/vulkan-go/vulkan) and was developed starting with the associated example code surrounding that project.  Vulkan is a relatively new, essentially universally supported interface to GPU hardware across all types of systems from mobile phones to massive GPU-based compute hardware, and it provides high-performance "bare metal" access to the hardware, for both graphics and computational uses.
 
 [Vulkan](https://www.vulkan.org) is very low-level and demands a higher-level framework to manage the complexity and verbosity.  While there are many helpful tutorials covering the basic API, many of the tutorials don't provide much of a pathway for how to organize everything at a higher level of abstraction.  vGPU represents one attempt that enforces some reasonable choices that enable a significantly simpler programming model, while still providing considerable flexibility and high levels of performance.  Everything is a tradeoff, and simplicity definitely was prioritized over performance in a few cases, but in practical use-cases, the performance differences should be minimal.
