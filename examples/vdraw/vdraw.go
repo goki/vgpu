@@ -1,4 +1,4 @@
-// Copyright (c) 2022, The Emergent Authors. All rights reserved.
+// Copyright (c) 2022, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -20,9 +20,9 @@ import (
 
 	vk "github.com/goki/vulkan"
 
+	"cogentcore.org/core/vgpu"
+	"cogentcore.org/core/vgpu/vdraw"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"goki.dev/vgpu/v2/vdraw"
-	"goki.dev/vgpu/v2/vgpu"
 )
 
 func init() {
@@ -59,7 +59,7 @@ func main() {
 	vgpu.Debug = true
 	gp.Config("vDraw test")
 
-	// gp.PropsString(true) // print
+	// gp.PropertiesString(true) // print
 
 	surfPtr, err := window.CreateWindowSurface(gp.Instance, nil)
 	if err != nil {
@@ -99,24 +99,25 @@ func main() {
 	// icons loaded into a texture array
 	iconFiles := []string{"sound1.png", "text.png", "up.png", "world1.png"}
 	iconImgs := make([]image.Image, len(iconFiles))
-	iconIdx := 0
+	iconIndex := 0
 	iconFmt := vgpu.NewImageFormat(20, 22, len(iconFiles))
-	drw.ConfigImage(iconIdx, iconFmt)
+	drw.ConfigImage(iconIndex, iconFmt)
 	for i, fnm := range iconFiles {
 		pnm := filepath.Join("../images", fnm)
 		iconImgs[i] = OpenImage(pnm)
-		drw.SetGoImage(iconIdx, i, iconImgs[i], vgpu.NoFlipY)
+		drw.SetGoImage(iconIndex, i, iconImgs[i], vgpu.NoFlipY)
 	}
 
 	drw.SyncImages()
 
 	rendImgs := func(idx int) {
-		descIdx := 0
+		fmt.Println(drw.DestSize())
+		descIndex := 0
 		if idx+stoff >= vgpu.MaxTexturesPerSet {
-			descIdx = 1
+			descIndex = 1
 		}
-		drw.StartDraw(descIdx) // specifically starting with correct descIdx is key..
-		drw.Scale(idx+stoff, 0, sf.Format.Bounds(), image.ZR, vdraw.Src, vgpu.NoFlipY)
+		drw.StartDraw(descIndex) // specifically starting with correct descIndex is key..
+		drw.Scale(idx+stoff, 0, sf.Format.Bounds(), image.ZR, vdraw.Src, vgpu.NoFlipY, 0)
 		for i := range imgFiles {
 			// dp := image.Point{rand.Intn(500), rand.Intn(500)}
 			dp := image.Point{i * 50, i * 50}
@@ -124,7 +125,7 @@ func main() {
 		}
 		for i := range iconFiles {
 			dp := image.Point{rand.Intn(500), rand.Intn(500)}
-			drw.Copy(iconIdx, i, dp, image.ZR, vdraw.Over, vgpu.NoFlipY)
+			drw.Copy(iconIndex, i, dp, image.ZR, vdraw.Over, vgpu.NoFlipY)
 		}
 		drw.EndDraw()
 	}

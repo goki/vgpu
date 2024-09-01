@@ -1,4 +1,4 @@
-// Copyright (c) 2022, The Emergent Authors. All rights reserved.
+// Copyright (c) 2022, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -16,13 +16,13 @@ import (
 	"runtime"
 	"time"
 
+	"cogentcore.org/core/math32"
 	vk "github.com/goki/vulkan"
-	"goki.dev/mat32/v2"
 
+	"cogentcore.org/core/vgpu"
+	"cogentcore.org/core/vgpu/vphong"
+	"cogentcore.org/core/vgpu/vshape"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"goki.dev/vgpu/v2/vgpu"
-	"goki.dev/vgpu/v2/vphong"
-	"goki.dev/vgpu/v2/vshape"
 )
 
 func init() {
@@ -32,10 +32,10 @@ func init() {
 
 func OpenImage(fname string) image.Image {
 	file, err := os.Open(fname)
-	defer file.Close()
 	if err != nil {
 		fmt.Printf("image: %s\n", err)
 	}
+	defer file.Close()
 	gimg, _, err := image.Decode(file)
 	if err != nil {
 		fmt.Println(err)
@@ -60,7 +60,7 @@ func main() {
 	vgpu.Debug = true
 	gp.Config("vPhong test")
 
-	// gp.PropsString(true) // print
+	// gp.PropertiesString(true) // print
 
 	surfPtr, err := window.CreateWindowSurface(gp.Instance, nil)
 	if err != nil {
@@ -91,53 +91,55 @@ func main() {
 	/////////////////////////////
 	// Lights
 
-	amblt := mat32.NewVec3Color(color.White).MulScalar(.1)
+	amblt := math32.NewVector3Color(color.White).MulScalar(.1)
 	ph.AddAmbientLight(amblt)
 
-	dirlt := mat32.NewVec3Color(color.White).MulScalar(1)
-	ph.AddDirLight(dirlt, mat32.V3(0, 1, 1))
+	dirlt := math32.NewVector3Color(color.White).MulScalar(1)
+	ph.AddDirLight(dirlt, math32.Vec3(0, 1, 1))
 
-	// ph.AddPointLight(mat32.NewVec3Color(color.White), mat32.V3(0, 2, 5), .1, .01)
+	// ph.AddPointLight(math32.NewVector3Color(color.White), math32.Vec3(-5, 0, 2), .01, .001)
 	//
-	// ph.AddSpotLight(mat32.NewVec3Color(color.White), mat32.V3(-2, 5, -2), mat32.V3(0, -1, 0), 10, 45, .01, .001)
+	// ph.AddSpotLight(math32.NewVector3Color(color.White), math32.Vec3(-2, 5, -2), math32.Vec3(0, -1, 0), 10, 45, .01, .001)
+
+	ph.Config()
 
 	/////////////////////////////
 	// Meshes
 
-	floor := vshape.NewPlane(mat32.Y, 100, 100)
+	floor := vshape.NewPlane(math32.Y, 100, 100)
 	floor.Segs.Set(100, 100) // won't show lighting without
-	nVtx, nIdx := floor.N()
-	ph.AddMesh("floor", nVtx, nIdx, false)
+	numVertex, nIndex := floor.N()
+	ph.AddMesh("floor", numVertex, nIndex, false)
 
 	cube := vshape.NewBox(1, 1, 1)
 	cube.Segs.Set(100, 100, 100) // key for showing lights
-	nVtx, nIdx = cube.N()
-	ph.AddMesh("cube", nVtx, nIdx, false)
+	numVertex, nIndex = cube.N()
+	ph.AddMesh("cube", numVertex, nIndex, false)
 
 	sphere := vshape.NewSphere(.5, 64)
-	nVtx, nIdx = sphere.N()
-	ph.AddMesh("sphere", nVtx, nIdx, false)
+	numVertex, nIndex = sphere.N()
+	ph.AddMesh("sphere", numVertex, nIndex, false)
 
 	cylinder := vshape.NewCylinder(1, .5, 64, 64, true, true)
-	nVtx, nIdx = cylinder.N()
-	ph.AddMesh("cylinder", nVtx, nIdx, false)
+	numVertex, nIndex = cylinder.N()
+	ph.AddMesh("cylinder", numVertex, nIndex, false)
 
 	cone := vshape.NewCone(1, .5, 64, 64, true)
-	nVtx, nIdx = cone.N()
-	ph.AddMesh("cone", nVtx, nIdx, false)
+	numVertex, nIndex = cone.N()
+	ph.AddMesh("cone", numVertex, nIndex, false)
 
 	capsule := vshape.NewCapsule(1, .5, 64, 64)
 	// capsule.BotRad = 0
-	nVtx, nIdx = capsule.N()
-	ph.AddMesh("capsule", nVtx, nIdx, false)
+	numVertex, nIndex = capsule.N()
+	ph.AddMesh("capsule", numVertex, nIndex, false)
 
 	torus := vshape.NewTorus(2, .2, 64)
-	nVtx, nIdx = torus.N()
-	ph.AddMesh("torus", nVtx, nIdx, false)
+	numVertex, nIndex = torus.N()
+	ph.AddMesh("torus", numVertex, nIndex, false)
 
-	lines := vshape.NewLines([]mat32.Vec3{{-3, -1, 0), {-2, 1, 0}, {2, 1, 0}, {3, -1, 0}}, mat32.V2(.2, .1), false)
-	nVtx, nIdx = lines.N()
-	ph.AddMesh("lines", nVtx, nIdx, false)
+	lines := vshape.NewLines([]math32.Vector3{{-3, -1, 0}, {-2, 1, 0}, {2, 1, 0}, {3, -1, 0}}, math32.Vec2(.2, .1), false)
+	numVertex, nIndex = lines.N()
+	ph.AddMesh("lines", numVertex, nIndex, false)
 
 	/////////////////////////////
 	// Textures
@@ -173,29 +175,29 @@ func main() {
 	// Camera / Mtxs
 
 	// This is the standard camera view projection computation
-	campos := mat32.V3(0, 2, 10)
-	view := vphong.CameraViewMat(campos, mat32.V3(0, 0, 0), mat32.Vec3Y)
+	campos := math32.Vec3(0, 2, 10)
+	view := vphong.CameraViewMat(campos, math32.Vec3(0, 0, 0), math32.Vec3(0, 1, 0))
 
 	aspect := sf.Format.Aspect()
-	var prjn mat32.Mat4
-	prjn.SetVkPerspective(45, aspect, 0.01, 100)
+	var projection math32.Matrix4
+	projection.SetVkPerspective(45, aspect, 0.01, 100)
 
-	var model1 mat32.Mat4
+	var model1 math32.Matrix4
 	model1.SetRotationY(0.5)
 
-	var model2 mat32.Mat4
+	var model2 math32.Matrix4
 	model2.SetTranslation(-2, 0, 0)
 
-	var model3 mat32.Mat4
+	var model3 math32.Matrix4
 	model3.SetTranslation(0, 0, -2)
 
-	var model4 mat32.Mat4
+	var model4 math32.Matrix4
 	model4.SetTranslation(-1, 0, -2)
 
-	var model5 mat32.Mat4
+	var model5 math32.Matrix4
 	model5.SetTranslation(1, 0, -1)
 
-	var floortx mat32.Mat4
+	var floortx math32.Matrix4
 	floortx.SetTranslation(0, -2, -2)
 
 	/////////////////////////////
@@ -203,50 +205,50 @@ func main() {
 
 	ph.Config()
 
-	ph.SetViewPrjn(view, &prjn)
+	ph.SetViewProjection(view, &projection)
 
 	/////////////////////////////
 	//  Set Mesh values
 
-	vtxAry, normAry, texAry, _, idxAry := ph.MeshFloatsByName("floor")
-	floor.Set(vtxAry, normAry, texAry, idxAry)
+	vertexArray, normArray, textureArray, _, indexArray := ph.MeshFloatsByName("floor")
+	floor.Set(vertexArray, normArray, textureArray, indexArray)
 	ph.ModMeshByName("floor")
 
-	vtxAry, normAry, texAry, _, idxAry = ph.MeshFloatsByName("cube")
-	cube.Set(vtxAry, normAry, texAry, idxAry)
+	vertexArray, normArray, textureArray, _, indexArray = ph.MeshFloatsByName("cube")
+	cube.Set(vertexArray, normArray, textureArray, indexArray)
 	ph.ModMeshByName("cube")
 
-	vtxAry, normAry, texAry, _, idxAry = ph.MeshFloatsByName("sphere")
-	sphere.Set(vtxAry, normAry, texAry, idxAry)
+	vertexArray, normArray, textureArray, _, indexArray = ph.MeshFloatsByName("sphere")
+	sphere.Set(vertexArray, normArray, textureArray, indexArray)
 	ph.ModMeshByName("sphere")
 
-	vtxAry, normAry, texAry, _, idxAry = ph.MeshFloatsByName("cylinder")
-	cylinder.Set(vtxAry, normAry, texAry, idxAry)
+	vertexArray, normArray, textureArray, _, indexArray = ph.MeshFloatsByName("cylinder")
+	cylinder.Set(vertexArray, normArray, textureArray, indexArray)
 	ph.ModMeshByName("cylinder")
 
-	vtxAry, normAry, texAry, _, idxAry = ph.MeshFloatsByName("cone")
-	cone.Set(vtxAry, normAry, texAry, idxAry)
+	vertexArray, normArray, textureArray, _, indexArray = ph.MeshFloatsByName("cone")
+	cone.Set(vertexArray, normArray, textureArray, indexArray)
 	ph.ModMeshByName("cone")
 
-	vtxAry, normAry, texAry, _, idxAry = ph.MeshFloatsByName("capsule")
-	capsule.Set(vtxAry, normAry, texAry, idxAry)
+	vertexArray, normArray, textureArray, _, indexArray = ph.MeshFloatsByName("capsule")
+	capsule.Set(vertexArray, normArray, textureArray, indexArray)
 	ph.ModMeshByName("capsule")
 
-	vtxAry, normAry, texAry, _, idxAry = ph.MeshFloatsByName("torus")
-	torus.Set(vtxAry, normAry, texAry, idxAry)
+	vertexArray, normArray, textureArray, _, indexArray = ph.MeshFloatsByName("torus")
+	torus.Set(vertexArray, normArray, textureArray, indexArray)
 	ph.ModMeshByName("torus")
 
-	vtxAry, normAry, texAry, _, idxAry = ph.MeshFloatsByName("lines")
-	lines.Set(vtxAry, normAry, texAry, idxAry)
+	vertexArray, normArray, textureArray, _, indexArray = ph.MeshFloatsByName("lines")
+	lines.Set(vertexArray, normArray, textureArray, indexArray)
 	ph.ModMeshByName("lines")
 
 	ph.Sync()
 
 	updateMats := func() {
 		aspect := sf.Format.Aspect()
-		view = vphong.CameraViewMat(campos, mat32.V3(0, 0, 0), mat32.Vec3Y)
-		prjn.SetVkPerspective(45, aspect, 0.01, 100)
-		ph.SetViewPrjn(view, &prjn)
+		view = vphong.CameraViewMat(campos, math32.Vec3(0, 0, 0), math32.Vec3(0, 1, 0))
+		projection.SetVkPerspective(45, aspect, 0.01, 100)
+		ph.SetViewProjection(view, &projection)
 	}
 
 	render1 := func() {
@@ -254,7 +256,7 @@ func main() {
 		ph.SetModelMtx(&floortx)
 		ph.UseMeshName("floor")
 		// ph.UseNoTexture()
-		ph.UseTexturePars(mat32.V2(50, 50), mat32.Vec2{})
+		ph.UseTexturePars(math32.Vec2(50, 50), math32.Vector2{})
 		ph.UseTextureName("ground.png")
 		ph.Render()
 
@@ -313,10 +315,13 @@ func main() {
 	stTime := time.Now()
 
 	renderFrame := func() {
-		idx := sf.AcquireNextImage()
+		idx, ok := sf.AcquireNextImage()
+		if !ok {
+			return
+		}
 		cmd := sy.CmdPool.Buff
-		descIdx := 0 // if running multiple frames in parallel, need diff sets
-		sy.ResetBeginRenderPass(cmd, sf.Frames[idx], descIdx)
+		descIndex := 0 // if running multiple frames in parallel, need diff sets
+		sy.ResetBeginRenderPass(cmd, sf.Frames[idx], descIndex)
 
 		fcr := frameCount % 10
 		_ = fcr

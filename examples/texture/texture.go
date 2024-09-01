@@ -1,4 +1,4 @@
-// Copyright (c) 2022, The Goki Authors. All rights reserved.
+// Copyright (c) 2022, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -18,9 +18,9 @@ import (
 
 	vk "github.com/goki/vulkan"
 
+	"cogentcore.org/core/math32"
+	"cogentcore.org/core/vgpu"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"goki.dev/mat32/v2"
-	"goki.dev/vgpu/v2/vgpu"
 )
 
 func init() {
@@ -29,9 +29,9 @@ func init() {
 }
 
 type CamView struct {
-	Model mat32.Mat4
-	View  mat32.Mat4
-	Prjn  mat32.Mat4
+	Model      math32.Matrix4
+	View       math32.Matrix4
+	Projection math32.Matrix4
 }
 
 func OpenImage(fname string) image.Image {
@@ -63,7 +63,7 @@ func main() {
 	vgpu.Debug = true
 	gp.Config("texture")
 
-	// gp.PropsString(true) // print
+	// gp.PropertiesString(true) // print
 
 	surfPtr, err := window.CreateWindowSurface(gp.Instance, nil)
 	if err != nil {
@@ -101,29 +101,29 @@ func main() {
 	txset := vars.AddSet()
 
 	nPts := 4
-	nIdxs := 6
+	nIndexes := 6
 
-	posv := vset.Add("Pos", vgpu.Float32Vec3, nPts, vgpu.Vertex, vgpu.VertexShader)
-	clrv := vset.Add("Color", vgpu.Float32Vec3, nPts, vgpu.Vertex, vgpu.VertexShader)
-	txcv := vset.Add("TexCoord", vgpu.Float32Vec2, nPts, vgpu.Vertex, vgpu.VertexShader)
+	posv := vset.Add("Pos", vgpu.Float32Vector3, nPts, vgpu.Vertex, vgpu.VertexShader)
+	clrv := vset.Add("Color", vgpu.Float32Vector3, nPts, vgpu.Vertex, vgpu.VertexShader)
+	txcv := vset.Add("TexCoord", vgpu.Float32Vector2, nPts, vgpu.Vertex, vgpu.VertexShader)
 	// note: always put indexes last so there isn't a gap in the location indexes!
-	idxv := vset.Add("Index", vgpu.Uint16, nIdxs, vgpu.Index, vgpu.VertexShader)
+	idxv := vset.Add("Index", vgpu.Uint16, nIndexes, vgpu.Index, vgpu.VertexShader)
 
-	camv := uset.AddStruct("Camera", vgpu.Float32Mat4.Bytes()*3, 1, vgpu.Uniform, vgpu.VertexShader)
+	camv := uset.AddStruct("Camera", vgpu.Float32Matrix4.Bytes()*3, 1, vgpu.Uniform, vgpu.VertexShader)
 
-	txidxv := pcset.Add("TexIdx", vgpu.Int32, 1, vgpu.Push, vgpu.FragmentShader)
+	txidxv := pcset.Add("TexIndex", vgpu.Int32, 1, vgpu.Push, vgpu.FragmentShader)
 	tximgv := txset.Add("TexSampler", vgpu.ImageRGBA32, 1, vgpu.TextureRole, vgpu.FragmentShader)
 
-	vset.ConfigVals(1) // val per var
-	uset.ConfigVals(1)
-	txset.ConfigVals(3)
+	vset.ConfigValues(1) // val per var
+	uset.ConfigValues(1)
+	txset.ConfigValues(3)
 
 	imgFiles := []string{"ground.png", "wood.png", "teximg.jpg"}
 	imgs := make([]image.Image, len(imgFiles))
 	for i, fnm := range imgFiles {
 		pnm := filepath.Join("../images", fnm)
 		imgs[i] = OpenImage(pnm)
-		img, _ := tximgv.Vals.ValByIdxTry(i)
+		img, _ := tximgv.Values.ValueByIndexTry(i)
 		img.Texture.ConfigGoImage(imgs[i].Bounds().Size(), 0)
 		// img.Texture.Sampler.Border = vgpu.BorderBlack
 		// img.Texture.Sampler.UMode = vgpu.ClampToBorder
@@ -133,7 +133,7 @@ func main() {
 	sy.Config() // allocates everything etc
 
 	// note: first val in set is offset
-	rectPos, _ := posv.Vals.ValByIdxTry(0)
+	rectPos, _ := posv.Values.ValueByIndexTry(0)
 	rectPosA := rectPos.Floats32()
 	rectPosA.Set(0,
 		-0.5, -0.5, 0.0,
@@ -142,7 +142,7 @@ func main() {
 		-0.5, 0.5, 0.0)
 	rectPos.SetMod()
 
-	rectClr, _ := clrv.Vals.ValByIdxTry(0)
+	rectClr, _ := clrv.Values.ValueByIndexTry(0)
 	rectClrA := rectClr.Floats32()
 	rectClrA.Set(0,
 		1.0, 0.0, 0.0,
@@ -151,7 +151,7 @@ func main() {
 		1.0, 1.0, 0.0)
 	rectClr.SetMod()
 
-	rectTex, _ := txcv.Vals.ValByIdxTry(0)
+	rectTex, _ := txcv.Values.ValueByIndexTry(0)
 	rectTexA := rectTex.Floats32()
 	rectTexA.Set(0,
 		1.0, 0.0,
@@ -160,23 +160,23 @@ func main() {
 		1.0, 1.0)
 	rectTex.SetMod()
 
-	rectIdx, _ := idxv.Vals.ValByIdxTry(0)
+	rectIndex, _ := idxv.Values.ValueByIndexTry(0)
 	idxs := []uint16{0, 1, 2, 0, 2, 3}
-	rectIdx.CopyFromBytes(unsafe.Pointer(&idxs[0]))
+	rectIndex.CopyFromBytes(unsafe.Pointer(&idxs[0]))
 
 	for i, gimg := range imgs {
-		img, _ := tximgv.Vals.ValByIdxTry(i)
+		img, _ := tximgv.Values.ValueByIndexTry(i)
 		img.SetGoImage(gimg, 0, vgpu.FlipY)
 	}
 
 	// This is the standard camera view projection computation
-	cam, _ := camv.Vals.ValByIdxTry(0)
-	campos := mat32.V3(0, 0, 2)
-	target := mat32.V3(0, 0, 0)
-	var lookq mat32.Quat
-	lookq.SetFromRotationMatrix(mat32.NewLookAt(campos, target, mat32.Vec3Y))
-	scale := mat32.V3(1, 1, 1)
-	var cview mat32.Mat4
+	cam, _ := camv.Values.ValueByIndexTry(0)
+	campos := math32.Vec3(0, 0, 2)
+	target := math32.Vec3(0, 0, 0)
+	var lookq math32.Quat
+	lookq.SetFromRotationMatrix(math32.NewLookAt(campos, target, math32.Vec3(0, 1, 0)))
+	scale := math32.Vec3(1, 1, 1)
+	var cview math32.Matrix4
 	cview.SetTransform(campos, lookq, scale)
 	view, _ := cview.Inverse()
 
@@ -188,7 +188,7 @@ func main() {
 	// VkPerspective version automatically flips Y axis and shifts depth
 	// into a 0..1 range instead of -1..1, so original GL based geometry
 	// will render identically here.
-	camo.Prjn.SetVkPerspective(45, aspect, 0.01, 100)
+	camo.Projection.SetVkPerspective(45, aspect, 0.01, 100)
 
 	cam.CopyFromBytes(unsafe.Pointer(&camo)) // sets mod
 
@@ -198,7 +198,7 @@ func main() {
 	vars.BindStatVars(1)  // gets images
 	vars.BindVarsEnd()
 
-	vars.BindDynVal(0, camv, cam)
+	vars.BindDynamicValue(0, camv, cam)
 
 	frameCount := 0
 	stTime := time.Now()
@@ -210,16 +210,19 @@ func main() {
 		cam.CopyFromBytes(unsafe.Pointer(&camo)) // sets mod
 		sy.Mem.SyncToGPU()
 
-		imgIdx := int32(frameCount % len(imgs))
+		imgIndex := int32(frameCount % len(imgs))
 
-		idx := sf.AcquireNextImage()
+		idx, ok := sf.AcquireNextImage()
+		if !ok {
+			return
+		}
 
 		cmd := sy.CmdPool.Buff
-		descIdx := 0 // if running multiple frames in parallel, need diff sets
+		descIndex := 0 // if running multiple frames in parallel, need diff sets
 
-		sy.ResetBeginRenderPass(cmd, sf.Frames[idx], descIdx)
-		pl.Push(cmd, txidxv, unsafe.Pointer(&imgIdx))
-		pl.BindDrawVertex(cmd, descIdx)
+		sy.ResetBeginRenderPass(cmd, sf.Frames[idx], descIndex)
+		pl.Push(cmd, txidxv, unsafe.Pointer(&imgIndex))
+		pl.BindDrawVertex(cmd, descIndex)
 		sy.EndRenderPass(cmd)
 
 		sf.SubmitRender(cmd) // this is where it waits for the 16 msec

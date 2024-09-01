@@ -1,4 +1,4 @@
-// Copyright (c) 2022, The Goki Authors. All rights reserved.
+// Copyright (c) 2022, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"runtime"
 
-	"goki.dev/mat32/v2"
-	"goki.dev/vgpu/v2/vgpu"
+	"cogentcore.org/core/math32"
+	"cogentcore.org/core/vgpu"
 )
 
 func init() {
@@ -27,7 +27,7 @@ func main() {
 	gp.Config("memtest")
 	fmt.Printf("Running on GPU: %s\n", gp.DeviceName)
 
-	// gp.PropsString(true) // print
+	// gp.PropertiesString(true) // print
 
 	sy := gp.NewComputeSystem("memtest")
 	sy.StaticVars = true // not working yet
@@ -40,11 +40,11 @@ func main() {
 	n := 64
 
 	threads := 64
-	nInt := mat32.IntMultiple(float32(n), float32(threads))
+	nInt := math32.IntMultiple(float32(n), float32(threads))
 	n = int(nInt)       // enforce optimal n's -- otherwise requires range checking
 	nGps := n / threads // dispatch n
 
-	maxBuff := (gp.GPUProps.Limits.MaxStorageBufferRange - 16) / 4
+	maxBuff := (gp.GPUProperties.Limits.MaxStorageBufferRange - 16) / 4
 	mem2g := ((1 << 31) - 1) / 4
 	mem1g := ((1 << 30) - 1) / 4
 
@@ -59,13 +59,13 @@ func main() {
 
 	_, _ = bav, bbv
 
-	set.ConfigVals(1) // one val per var
-	sy.Config()       // configures vars, allocates vals, configs pipelines..
+	set.ConfigValues(1) // one val per var
+	sy.Config()         // configures vars, allocates vals, configs pipelines..
 
 	// bahost := make([]float32, bav)
 	// bbhost := make([]float32, bbv)
 
-	// vars.BindDynValsAllIdx(0)
+	// vars.BindDynValuesAllIndex(0)
 
 	cmd := sy.ComputeCmdBuff()
 	sy.ComputeResetBindVars(cmd, 0)
@@ -73,10 +73,10 @@ func main() {
 	sy.ComputeCmdEnd(cmd)
 	sy.ComputeSubmitWait(cmd)
 
-	sy.Mem.SyncValIdxFmGPU(0, "Ba", 0)
-	_, bavl, _ := vars.ValByIdxTry(0, "Ba", 0)
-	sy.Mem.SyncValIdxFmGPU(0, "Bb", 0)
-	_, bbvl, _ := vars.ValByIdxTry(0, "Bb", 0)
+	sy.Mem.SyncValueIndexFromGPU(0, "Ba", 0)
+	_, bavl, _ := vars.ValueByIndexTry(0, "Ba", 0)
+	sy.Mem.SyncValueIndexFromGPU(0, "Bb", 0)
+	_, bbvl, _ := vars.ValueByIndexTry(0, "Bb", 0)
 
 	bas := bavl.UInts32()
 	bbs := bbvl.UInts32()

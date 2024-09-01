@@ -1,4 +1,4 @@
-// Copyright (c) 2022, The Goki Authors. All rights reserved.
+// Copyright (c) 2022, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -12,8 +12,8 @@ import (
 
 	vk "github.com/goki/vulkan"
 
+	"cogentcore.org/core/vgpu"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"goki.dev/vgpu/v2/vgpu"
 )
 
 func init() {
@@ -37,7 +37,7 @@ func main() {
 	vgpu.Debug = true
 	gp.Config("drawtri")
 
-	// gp.PropsString(true) // print
+	// gp.PropertiesString(true) // print
 
 	surfPtr, err := window.CreateWindowSurface(gp.Instance, nil)
 	if err != nil {
@@ -50,7 +50,7 @@ func main() {
 
 	sy := gp.NewGraphicsSystem("drawtri", &sf.Device)
 	pl := sy.NewPipeline("drawtri")
-	sy.ConfigRender(&sf.Format, vgpu.UndefType)
+	sy.ConfigRender(&sf.Format, vgpu.UndefinedType)
 	sf.SetRender(&sy.Render)
 
 	pl.AddShaderFile("trianglelit", vgpu.VertexShader, "trianglelit.spv")
@@ -73,11 +73,14 @@ func main() {
 	renderFrame := func() {
 		// fmt.Printf("frame: %d\n", frameCount)
 		// rt := time.Now()
-		idx := sf.AcquireNextImage()
+		idx, ok := sf.AcquireNextImage()
+		if !ok {
+			return
+		}
 		// fmt.Printf("\nacq: %v\n", time.Now().Sub(rt))
-		descIdx := 0 // if running multiple frames in parallel, need diff sets
+		descIndex := 0 // if running multiple frames in parallel, need diff sets
 		cmd := sy.CmdPool.Buff
-		sy.ResetBeginRenderPass(cmd, sf.Frames[idx], descIdx)
+		sy.ResetBeginRenderPass(cmd, sf.Frames[idx], descIndex)
 		// fmt.Printf("rp: %v\n", time.Now().Sub(rt))
 		pl.BindPipeline(cmd)
 		pl.Draw(cmd, 3, 1, 0, 0)

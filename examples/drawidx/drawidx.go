@@ -1,4 +1,4 @@
-// Copyright (c) 2022, The Goki Authors. All rights reserved.
+// Copyright (c) 2022, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -13,9 +13,9 @@ import (
 
 	vk "github.com/goki/vulkan"
 
+	"cogentcore.org/core/math32"
+	"cogentcore.org/core/vgpu"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"goki.dev/mat32/v2"
-	"goki.dev/vgpu/v2/vgpu"
 )
 
 func init() {
@@ -24,9 +24,9 @@ func init() {
 }
 
 type CamView struct {
-	Model mat32.Mat4
-	View  mat32.Mat4
-	Prjn  mat32.Mat4
+	Model      math32.Matrix4
+	View       math32.Matrix4
+	Projection math32.Matrix4
 }
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 	vgpu.Debug = true
 	gp.Config("drawidx")
 
-	// gp.PropsString(true) // print
+	// gp.PropertiesString(true) // print
 
 	surfPtr, err := window.CreateWindowSurface(gp.Instance, nil)
 	if err != nil {
@@ -83,20 +83,20 @@ func main() {
 
 	nPts := 3
 
-	posv := vset.Add("Pos", vgpu.Float32Vec3, nPts, vgpu.Vertex, vgpu.VertexShader)
-	clrv := vset.Add("Color", vgpu.Float32Vec3, nPts, vgpu.Vertex, vgpu.VertexShader)
+	posv := vset.Add("Pos", vgpu.Float32Vector3, nPts, vgpu.Vertex, vgpu.VertexShader)
+	clrv := vset.Add("Color", vgpu.Float32Vector3, nPts, vgpu.Vertex, vgpu.VertexShader)
 	// note: always put indexes last so there isn't a gap in the location indexes!
 	// just the fact of adding one (and only one) Index type triggers indexed render
 	idxv := vset.Add("Index", vgpu.Uint16, nPts, vgpu.Index, vgpu.VertexShader)
 
 	camv := set.Add("Camera", vgpu.Struct, 1, vgpu.Uniform, vgpu.VertexShader)
-	camv.SizeOf = vgpu.Float32Mat4.Bytes() * 3 // no padding for these
+	camv.SizeOf = vgpu.Float32Matrix4.Bytes() * 3 // no padding for these
 
-	vset.ConfigVals(1) // one val per var
-	set.ConfigVals(1)  // one val per var
+	vset.ConfigValues(1) // one val per var
+	set.ConfigValues(1)  // one val per var
 	sy.Config()
 
-	triPos, _ := posv.Vals.ValByIdxTry(0)
+	triPos, _ := posv.Values.ValueByIndexTry(0)
 	triPosA := triPos.Floats32()
 	triPosA.Set(0,
 		-0.5, 0.5, 0.0,
@@ -104,7 +104,7 @@ func main() {
 		0.0, -0.5, 0.0) // negative point is UP in native Vulkan
 	triPos.SetMod()
 
-	triClr, _ := clrv.Vals.ValByIdxTry(0)
+	triClr, _ := clrv.Values.ValueByIndexTry(0)
 	triClrA := triClr.Floats32()
 	triClrA.Set(0,
 		1.0, 0.0, 0.0,
@@ -112,18 +112,18 @@ func main() {
 		0.0, 0.0, 1.0)
 	triClr.SetMod()
 
-	triIdx, _ := idxv.Vals.ValByIdxTry(0)
+	triIndex, _ := idxv.Values.ValueByIndexTry(0)
 	idxs := []uint16{0, 1, 2}
-	triIdx.CopyFromBytes(unsafe.Pointer(&idxs[0]))
+	triIndex.CopyFromBytes(unsafe.Pointer(&idxs[0]))
 
 	// This is the standard camera view projection computation
-	cam, _ := camv.Vals.ValByIdxTry(0)
-	campos := mat32.V3(0, 0, 2)
-	target := mat32.V3(0, 0, 0)
-	var lookq mat32.Quat
-	lookq.SetFromRotationMatrix(mat32.NewLookAt(campos, target, mat32.V3(0, 1, 0)))
-	scale := mat32.V3(1, 1, 1)
-	var cview mat32.Mat4
+	cam, _ := camv.Values.ValueByIndexTry(0)
+	campos := math32.Vec3(0, 0, 2)
+	target := math32.Vec3(0, 0, 0)
+	var lookq math32.Quat
+	lookq.SetFromRotationMatrix(math32.NewLookAt(campos, target, math32.Vec3(0, 1, 0)))
+	scale := math32.Vec3(1, 1, 1)
+	var cview math32.Matrix4
 	cview.SetTransform(campos, lookq, scale)
 	view, _ := cview.Inverse()
 
@@ -132,16 +132,13 @@ func main() {
 	camo.View.CopyFrom(view)
 	aspect := float32(sf.Format.Size.X) / float32(sf.Format.Size.Y)
 	fmt.Printf("aspect: %g\n", aspect)
-	// VkPerspective version automatically flips Y axis and shifts depth
-	// into a 0..1 range instead of -1..1, so original GL based geometry
-	// will render identically here.
-	camo.Prjn.SetVkPerspective(45, aspect, 0.01, 100)
+	camo.Projection.SetPerspective(45, aspect, 0.01, 100)
 
 	cam.CopyFromBytes(unsafe.Pointer(&camo)) // sets mod
 
 	sy.Mem.SyncToGPU()
 
-	vars.BindDynVal(0, camv, cam)
+	vars.BindDynamicValue(0, camv, cam)
 
 	frameCount := 0
 	stTime := time.Now()
@@ -153,12 +150,15 @@ func main() {
 		cam.CopyFromBytes(unsafe.Pointer(&camo)) // sets mod
 		sy.Mem.SyncToGPU()
 
-		idx := sf.AcquireNextImage()
+		idx, ok := sf.AcquireNextImage()
+		if !ok {
+			return
+		}
 		// fmt.Printf("\nacq: %v\n", time.Now().Sub(rt))
-		descIdx := 0 // if running multiple frames in parallel, need diff sets
+		descIndex := 0 // if running multiple frames in parallel, need diff sets
 		cmd := sy.CmdPool.Buff
-		sy.ResetBeginRenderPass(cmd, sf.Frames[idx], descIdx)
-		pl.BindDrawVertex(cmd, descIdx)
+		sy.ResetBeginRenderPass(cmd, sf.Frames[idx], descIndex)
+		pl.BindDrawVertex(cmd, descIndex)
 		sy.EndRenderPass(cmd)
 		// fmt.Printf("cmd %v\n", time.Now().Sub(rt))
 		sf.SubmitRender(cmd) // this is where it waits for the 16 msec

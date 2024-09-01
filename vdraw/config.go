@@ -1,4 +1,4 @@
-// Copyright 2022 The Goki Authors. All rights reserved.
+// Copyright 2022 Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -10,9 +10,9 @@ import (
 	"image/draw"
 	"unsafe"
 
+	"cogentcore.org/core/math32"
+	"cogentcore.org/core/vgpu"
 	vk "github.com/goki/vulkan"
-	"goki.dev/mat32/v2"
-	"goki.dev/vgpu/v2/vgpu"
 )
 
 //go:embed shaders/*.spv
@@ -20,15 +20,15 @@ var content embed.FS
 
 // Mtxs are the projection matricies
 type Mtxs struct {
-	MVP mat32.Mat4
-	UVP mat32.Mat4
+	MVP math32.Matrix4
+	UVP math32.Matrix4
 }
 
 // DrawerImpl contains implementation state -- ignore..
 type DrawerImpl struct {
 
 	// surface index for current render process
-	SurfIdx uint32
+	SurfIndex uint32
 
 	// maximum number of images per pass -- set by user at config
 	MaxTextures int
@@ -88,25 +88,25 @@ func (dw *Drawer) ConfigSys() {
 	txset := vars.AddSet() // 0
 
 	nPts := 4
-	nIdxs := 6
+	nIndexes := 6
 
-	posv := vset.Add("Pos", vgpu.Float32Vec2, nPts, vgpu.Vertex, vgpu.VertexShader)
-	idxv := vset.Add("Index", vgpu.Uint16, nIdxs, vgpu.Index, vgpu.VertexShader)
+	posv := vset.Add("Pos", vgpu.Float32Vector2, nPts, vgpu.Vertex, vgpu.VertexShader)
+	idxv := vset.Add("Index", vgpu.Uint16, nIndexes, vgpu.Index, vgpu.VertexShader)
 
-	pcset.AddStruct("Mtxs", vgpu.Float32Mat4.Bytes()*2, 1, vgpu.Push, vgpu.VertexShader, vgpu.FragmentShader)
+	pcset.AddStruct("Mtxs", vgpu.Float32Matrix4.Bytes()*2, 1, vgpu.Push, vgpu.VertexShader, vgpu.FragmentShader)
 	// note: packing texidx into mvp[0][3] to fit within 128 byte limit
 
 	tximgv := txset.Add("Tex", vgpu.ImageRGBA32, 1, vgpu.TextureRole, vgpu.FragmentShader)
 	tximgv.TextureOwns = true
 
-	vset.ConfigVals(1)
-	txset.ConfigVals(dw.Impl.MaxTextures)
+	vset.ConfigValues(1)
+	txset.ConfigValues(dw.Impl.MaxTextures)
 
 	// note: add all values per above before doing Config
 	sy.Config()
 
 	// note: first val in set is offset
-	rectPos, _ := posv.Vals.ValByIdxTry(0)
+	rectPos, _ := posv.Values.ValueByIndexTry(0)
 	rectPosA := rectPos.Floats32()
 	rectPosA.Set(0,
 		0.0, 0.0,
@@ -115,14 +115,14 @@ func (dw *Drawer) ConfigSys() {
 		1.0, 1.0)
 	rectPos.SetMod()
 
-	rectIdx, _ := idxv.Vals.ValByIdxTry(0)
+	rectIndex, _ := idxv.Values.ValueByIndexTry(0)
 	idxs := []uint16{0, 1, 2, 2, 1, 3} // triangle strip order
-	rectIdx.CopyFromBytes(unsafe.Pointer(&idxs[0]))
+	rectIndex.CopyFromBytes(unsafe.Pointer(&idxs[0]))
 
 	sy.Mem.SyncToGPU()
 
-	vars.BindVertexValIdx("Pos", 0)
-	vars.BindVertexValIdx("Index", 0)
+	vars.BindVertexValueIndex("Pos", 0)
+	vars.BindVertexValueIndex("Index", 0)
 }
 
 // ConfigMtxs configures the draw matrix for given draw parameters:
@@ -132,7 +132,7 @@ func (dw *Drawer) ConfigSys() {
 // op is the drawing operation: Src = copy source directly (blit),
 // Over = alpha blend with existing
 // flipY inverts the Y axis of the source image.
-func (dw *Drawer) ConfigMtxs(src2dst mat32.Mat3, txsz image.Point, sr image.Rectangle, op draw.Op, flipY bool) *Mtxs {
+func (dw *Drawer) ConfigMtxs(src2dst math32.Matrix3, txsz image.Point, sr image.Rectangle, op draw.Op, flipY bool) *Mtxs {
 	var tmat Mtxs
 
 	if dw.YIsDown {
@@ -164,7 +164,7 @@ func (dw *Drawer) ConfigMtxs(src2dst mat32.Mat3, txsz image.Point, sr image.Rect
 		src2dst[1]*srcL+src2dst[4]*srcB+src2dst[7],
 		dw.YIsDown,
 	)
-	tmat.MVP.SetFromMat3(&matMVP) // todo render direct
+	tmat.MVP.SetFromMatrix3(&matMVP) // todo render direct
 
 	// OpenGL's fragment shaders' UV coordinates run from (0,0)-(1,1),
 	// unlike vertex shaders' XY coordinates running from (-1,+1)-(+1,-1).
@@ -198,12 +198,12 @@ func (dw *Drawer) ConfigMtxs(src2dst mat32.Mat3, txsz image.Point, sr image.Rect
 	//	  0 + a11 + a12 = sy
 
 	if flipY { // note: reversed from openGL for vulkan
-		tmat.UVP.SetFromMat3(&mat32.Mat3{
+		tmat.UVP.SetFromMatrix3(&math32.Matrix3{
 			qx - px, 0, 0,
 			0, sy - py, 0, // sy - py
 			px, py, 1})
 	} else {
-		tmat.UVP.SetFromMat3(&mat32.Mat3{
+		tmat.UVP.SetFromMatrix3(&math32.Matrix3{
 			qx - px, 0, 0,
 			0, py - sy, 0, // py - sy
 			px, sy, 1})
@@ -226,7 +226,7 @@ func (dw *Drawer) ConfigMtxs(src2dst mat32.Mat3, txsz image.Point, sr image.Rect
 // is a 2-unit by 2-unit square. The Y-axis points upwards.
 //
 // if yisdown is true, then the y=0 is at top in dest, else bottom
-func calcMVP(widthPx, heightPx int, tlx, tly, trx, try, blx, bly float32, yisdown bool) mat32.Mat3 {
+func calcMVP(widthPx, heightPx int, tlx, tly, trx, try, blx, bly float32, yisdown bool) math32.Matrix3 {
 	// Convert from pixel coords to vertex shader coords.
 	invHalfWidth := 2 / float32(widthPx)
 	invHalfHeight := 2 / float32(heightPx)
@@ -250,7 +250,7 @@ func calcMVP(widthPx, heightPx int, tlx, tly, trx, try, blx, bly float32, yisdow
 	//	- maps (0, 0) to (tlx, tly).
 	//	- maps (1, 0) to (trx, try).
 	//	- maps (0, 1) to (blx, bly).
-	return mat32.Mat3{
+	return math32.Matrix3{
 		trx - tlx, try - tly, 0,
 		blx - tlx, bly - tly, 0,
 		tlx, tly, 1,

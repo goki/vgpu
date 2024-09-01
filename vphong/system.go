@@ -1,4 +1,4 @@
-// Copyright 2022 The Goki Authors. All rights reserved.
+// Copyright 2022 Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,9 +8,9 @@ import (
 	"embed"
 	"unsafe"
 
+	"cogentcore.org/core/math32"
+	"cogentcore.org/core/vgpu"
 	vk "github.com/goki/vulkan"
-	"goki.dev/mat32/v2"
-	"goki.dev/vgpu/v2/vgpu"
 )
 
 //go:embed shaders/*.spv
@@ -22,7 +22,7 @@ var content embed.FS
 type CurRender struct {
 
 	// index of descriptor collection to use -- for threaded / parallel rendering -- see vgup.Vars NDescs for more info
-	DescIdx int
+	DescIndex int
 
 	// a texture was selected -- if true, overrides other options
 	UseTexture bool
@@ -31,7 +31,7 @@ type CurRender struct {
 	UseVtxColor bool
 
 	// current model pose matrix
-	ModelMtx mat32.Mat4
+	ModelMtx math32.Matrix4
 
 	// camera view and projection matrixes
 	VPMtx Mtxs
@@ -42,8 +42,8 @@ type CurRender struct {
 	// texture parameters -- repeat, offset
 	TexPars TexPars
 
-	// index of currently-selected texture
-	TexIdx int
+	// index of currently selected texture
+	TexIndex int
 }
 
 // PushU is the push constants structure, holding everything that
@@ -51,7 +51,7 @@ type CurRender struct {
 type PushU struct {
 
 	// Model Matrix: poses object in world coordinates
-	ModelMtx mat32.Mat4
+	ModelMtx math32.Matrix4
 
 	// surface colors
 	Color Colors
@@ -108,31 +108,31 @@ func (ph *Phong) ConfigSys() {
 	liteset := vars.AddSet()  // set = 2
 	txset := vars.AddSet()    // set = 3
 
-	vec4sz := vgpu.Float32Vec4.Bytes()
+	vector4sz := vgpu.Float32Vector4.Bytes()
 
-	vset.Add("Pos", vgpu.Float32Vec3, 0, vgpu.Vertex, vgpu.VertexShader)
-	vset.Add("Norm", vgpu.Float32Vec3, 0, vgpu.Vertex, vgpu.VertexShader)
-	vset.Add("Tex", vgpu.Float32Vec2, 0, vgpu.Vertex, vgpu.VertexShader)
-	vset.Add("Color", vgpu.Float32Vec4, 0, vgpu.Vertex, vgpu.VertexShader)
+	vset.Add("Pos", vgpu.Float32Vector3, 0, vgpu.Vertex, vgpu.VertexShader)
+	vset.Add("Norm", vgpu.Float32Vector3, 0, vgpu.Vertex, vgpu.VertexShader)
+	vset.Add("Tex", vgpu.Float32Vector2, 0, vgpu.Vertex, vgpu.VertexShader)
+	vset.Add("Color", vgpu.Float32Vector4, 0, vgpu.Vertex, vgpu.VertexShader)
 	vset.Add("Index", vgpu.Uint32, 0, vgpu.Index, vgpu.VertexShader)
 
 	pcset.AddStruct("PushU", int(unsafe.Sizeof(PushU{})), 1, vgpu.Push, vgpu.VertexShader, vgpu.FragmentShader)
 
-	mtxset.AddStruct("Mtxs", vgpu.Float32Mat4.Bytes()*2, 1, vgpu.Uniform, vgpu.VertexShader, vgpu.FragmentShader)
+	mtxset.AddStruct("Mtxs", vgpu.Float32Matrix4.Bytes()*2, 1, vgpu.Uniform, vgpu.VertexShader, vgpu.FragmentShader)
 
 	nliteset.AddStruct("NLights", 4*4, 1, vgpu.Uniform, vgpu.FragmentShader)
-	liteset.AddStruct("AmbLights", vec4sz*1, MaxLights, vgpu.Uniform, vgpu.FragmentShader)
-	liteset.AddStruct("DirLights", vec4sz*2, MaxLights, vgpu.Uniform, vgpu.FragmentShader)
-	liteset.AddStruct("PointLights", vec4sz*3, MaxLights, vgpu.Uniform, vgpu.FragmentShader)
-	liteset.AddStruct("SpotLights", vec4sz*4, MaxLights, vgpu.Uniform, vgpu.FragmentShader)
+	liteset.AddStruct("AmbLights", vector4sz*1, MaxLights, vgpu.Uniform, vgpu.FragmentShader)
+	liteset.AddStruct("DirLights", vector4sz*2, MaxLights, vgpu.Uniform, vgpu.FragmentShader)
+	liteset.AddStruct("PointLights", vector4sz*3, MaxLights, vgpu.Uniform, vgpu.FragmentShader)
+	liteset.AddStruct("SpotLights", vector4sz*4, MaxLights, vgpu.Uniform, vgpu.FragmentShader)
 
 	txset.Add("Tex", vgpu.ImageRGBA32, 1, vgpu.TextureRole, vgpu.FragmentShader)
 	// tximgv.TextureOwns = true
 
-	pcset.ConfigVals(1)
-	mtxset.ConfigVals(1)
-	nliteset.ConfigVals(1)
-	liteset.ConfigVals(1)
+	pcset.ConfigValues(1)
+	mtxset.ConfigValues(1)
+	nliteset.ConfigValues(1)
+	liteset.ConfigValues(1)
 }
 
 // Push pushes given push constant data

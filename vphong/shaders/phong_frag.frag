@@ -49,8 +49,8 @@ layout(set = 2, binding = 3) uniform SpotLightsU {
 	Spot SpotLights[MAX_LIGHTS];
 };
 
-// debugVec3 renders vector to color for debugging values
-// void debugVec3(vec3 val, out vec4 clr) {
+// debugVector3 renders vector to color for debugging values
+// void debugVector3(vec3 val, out vec4 clr) {
 // 	clr = vec4(0.5 + 0.5 * val, 1.0);
 // }
 

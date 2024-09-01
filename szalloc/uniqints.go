@@ -1,4 +1,4 @@
-// Copyright (c) 2022, The Goki Authors. All rights reserved.
+// Copyright (c) 2022, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,7 +8,7 @@ import (
 	"image"
 	"sort"
 
-	"goki.dev/mat32/v2"
+	"cogentcore.org/core/math32"
 )
 
 // UniqSortedInts returns the ints in sorted order with only unique vals
@@ -27,7 +27,7 @@ func UniqSortedInts(vals []int) []int {
 	return uvals
 }
 
-// SizeGroups returns evenly-spaced size groups of max N -- could be less
+// SizeGroups returns evenly spaced size groups of max N -- could be less
 func SizeGroups(sizes []int, maxN int) []int {
 	ns := len(sizes)
 	mxgp := min(ns, maxN)
@@ -35,7 +35,7 @@ func SizeGroups(sizes []int, maxN int) []int {
 
 	idxs := make([]int, mxgp)
 	for i := 0; i < mxgp; i++ {
-		cut := int(mat32.Round(float32(i+1) * nper))
+		cut := int(math32.Round(float32(i+1) * nper))
 		if cut >= ns {
 			cut = ns - 1
 		}

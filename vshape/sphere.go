@@ -1,4 +1,4 @@
-// Copyright 2022 The Goki Authors. All rights reserved.
+// Copyright 2022 Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -7,7 +7,7 @@ package vshape
 import (
 	"math"
 
-	"goki.dev/mat32/v2"
+	"cogentcore.org/core/math32"
 )
 
 // Sphere is a sphere shape (can be a partial sphere too)
@@ -56,25 +56,25 @@ func (sp *Sphere) Defaults() {
 	sp.ElevLen = 180
 }
 
-func (sp *Sphere) N() (nVtx, nIdx int) {
-	nVtx, nIdx = SphereSectorN(sp.WidthSegs, sp.HeightSegs, sp.ElevStart, sp.ElevLen)
+func (sp *Sphere) N() (numVertex, nIndex int) {
+	numVertex, nIndex = SphereSectorN(sp.WidthSegs, sp.HeightSegs, sp.ElevStart, sp.ElevLen)
 	return
 }
 
 // SetSphereSector sets points in given allocated arrays
-func (sp *Sphere) Set(vtxAry, normAry, texAry mat32.ArrayF32, idxAry mat32.ArrayU32) {
-	sp.CBBox = SetSphereSector(vtxAry, normAry, texAry, idxAry, sp.VtxOff, sp.IdxOff, sp.Radius, sp.WidthSegs, sp.HeightSegs, sp.AngStart, sp.AngLen, sp.ElevStart, sp.ElevLen, sp.Pos)
+func (sp *Sphere) Set(vertexArray, normArray, textureArray math32.ArrayF32, indexArray math32.ArrayU32) {
+	sp.CBBox = SetSphereSector(vertexArray, normArray, textureArray, indexArray, sp.VtxOff, sp.IndexOff, sp.Radius, sp.WidthSegs, sp.HeightSegs, sp.AngStart, sp.AngLen, sp.ElevStart, sp.ElevLen, sp.Pos)
 }
 
 // SphereSectorN returns the N's for a sphere sector's
 // vertex and index data with given number of segments.
 // Note: In *vertex* units, not float units (i.e., x3 to get
 // actual float offset in Vtx array).
-func SphereSectorN(widthSegs, heightSegs int, elevStart, elevLen float32) (nVtx, nIdx int) {
-	nVtx = (widthSegs + 1) * (heightSegs + 1)
+func SphereSectorN(widthSegs, heightSegs int, elevStart, elevLen float32) (numVertex, nIndex int) {
+	numVertex = (widthSegs + 1) * (heightSegs + 1)
 
-	elevStRad := mat32.DegToRad(elevStart)
-	elevLenRad := mat32.DegToRad(elevLen)
+	elevStRad := math32.DegToRad(elevStart)
+	elevLenRad := math32.DegToRad(elevLen)
 	elevEndRad := elevStRad + elevLenRad
 
 	h1idx := heightSegs - 1
@@ -85,55 +85,55 @@ func SphereSectorN(widthSegs, heightSegs int, elevStart, elevLen float32) (nVtx,
 	if elevEndRad < math.Pi {
 		h2idx++
 	}
-	nIdx = 3*h1idx*widthSegs + 3*h2idx*widthSegs
+	nIndex = 3*h1idx*widthSegs + 3*h2idx*widthSegs
 	return
 }
 
 // SetSphereSector sets a sphere sector vertex, norm, tex, index data at
 // given starting *vertex* index (i.e., multiply this *3 to get
-// actual float offset in Vtx array), and starting Idx index,
+// actual float offset in Vtx array), and starting Index index,
 // with the specified radius, number of radial segments in each
 // dimension (min 3), radial sector start
 // angle and length in degrees (0 - 360), start = -1,0,0,
 // elevation start angle and length in degrees (0 - 180), top = 0, bot = 180.
 // pos is an arbitrary offset (for composing shapes),
 // returns bounding box.
-func SetSphereSector(vtxAry, normAry, texAry mat32.ArrayF32, idxAry mat32.ArrayU32, vtxOff, idxOff int, radius float32, widthSegs, heightSegs int, angStart, angLen, elevStart, elevLen float32, pos mat32.Vec3) mat32.Box3 {
-	angStRad := mat32.DegToRad(angStart)
-	angLenRad := mat32.DegToRad(angLen)
-	elevStRad := mat32.DegToRad(elevStart)
-	elevLenRad := mat32.DegToRad(elevLen)
+func SetSphereSector(vertexArray, normArray, textureArray math32.ArrayF32, indexArray math32.ArrayU32, vtxOff, idxOff int, radius float32, widthSegs, heightSegs int, angStart, angLen, elevStart, elevLen float32, pos math32.Vector3) math32.Box3 {
+	angStRad := math32.DegToRad(angStart)
+	angLenRad := math32.DegToRad(angLen)
+	elevStRad := math32.DegToRad(elevStart)
+	elevLenRad := math32.DegToRad(elevLen)
 	elevEndRad := elevStRad + elevLenRad
 
 	if widthSegs < 3 || heightSegs < 3 {
 		panic("Invalid argument: segments. The number of segments needs to be greater or equal to 3.")
 	}
 
-	bb := mat32.Box3{}
+	bb := math32.Box3{}
 	bb.SetEmpty()
 
 	idx := 0
 	vidx := vtxOff * 3
 	tidx := vtxOff * 2
 	vtxs := make([][]uint32, 0)
-	var pt, norm mat32.Vec3
+	var pt, norm math32.Vector3
 
 	for y := 0; y <= heightSegs; y++ {
 		vtxsRow := make([]uint32, 0)
 		v := float32(y) / float32(heightSegs)
 		for x := 0; x <= widthSegs; x++ {
 			u := float32(x) / float32(widthSegs)
-			px := -radius * mat32.Cos(angStRad+u*angLenRad) * mat32.Sin(elevStRad+v*elevLenRad)
-			py := radius * mat32.Cos(elevStRad+v*elevLenRad)
-			pz := radius * mat32.Sin(angStRad+u*angLenRad) * mat32.Sin(elevStRad+v*elevLenRad)
+			px := -radius * math32.Cos(angStRad+u*angLenRad) * math32.Sin(elevStRad+v*elevLenRad)
+			py := radius * math32.Cos(elevStRad+v*elevLenRad)
+			pz := radius * math32.Sin(angStRad+u*angLenRad) * math32.Sin(elevStRad+v*elevLenRad)
 			pt.Set(px, py, pz)
 			pt.SetAdd(pos)
 			norm.Set(px, py, pz)
-			norm.Normalize()
+			norm.SetNormal()
 
-			vtxAry.SetVec3(vidx+idx*3, pt)
-			normAry.SetVec3(vidx+idx*3, norm)
-			texAry.Set(tidx+idx*2, u, v)
+			vertexArray.SetVector3(vidx+idx*3, pt)
+			normArray.SetVector3(vidx+idx*3, norm)
+			textureArray.Set(tidx+idx*2, u, v)
 			vtxsRow = append(vtxsRow, uint32(idx))
 			bb.ExpandByPoint(pt)
 			idx++
@@ -150,11 +150,11 @@ func SetSphereSector(vtxAry, normAry, texAry mat32.ArrayF32, idxAry mat32.ArrayU
 			v3 := vtxs[y+1][x]
 			v4 := vtxs[y+1][x+1]
 			if y != 0 || elevStRad > 0 {
-				idxAry.Set(ii, vOff+v1, vOff+v2, vOff+v4)
+				indexArray.Set(ii, vOff+v1, vOff+v2, vOff+v4)
 				ii += 3
 			}
 			if y != heightSegs-1 || elevEndRad < math.Pi {
-				idxAry.Set(ii, vOff+v2, vOff+v3, vOff+v4)
+				indexArray.Set(ii, vOff+v2, vOff+v3, vOff+v4)
 				ii += 3
 			}
 		}
@@ -166,59 +166,59 @@ func SetSphereSector(vtxAry, normAry, texAry mat32.ArrayF32, idxAry mat32.ArrayU
 // vertex and index data with given number of segments.
 // Note: In *vertex* units, not float units (i.e., x3 to get
 // actual float offset in Vtx array).
-func DiskSectorN(segs int) (nVtx, nIdx int) {
-	nVtx = segs + 2
-	nIdx = 2 * (segs - 1)
+func DiskSectorN(segs int) (numVertex, nIndex int) {
+	numVertex = segs + 2
+	nIndex = 2 * (segs - 1)
 	return
 }
 
 // SetDiskSector sets a disk sector vertex, norm, tex, index data at
 // given starting *vertex* index (i.e., multiply this *3 to get
-// actual float offset in Vtx array), and starting Idx index,
+// actual float offset in Vtx array), and starting Index index,
 // with the specified radius, number of radial segments (minimum 3),
 // sector start angle and angle length in degrees.
 // The center of the disk is at the origin,
 // and angle runs counter-clockwise on the XY plane, starting at (x,y,z)=(1,0,0).
 // pos is an arbitrary offset (for composing shapes),
 // returns bounding box.
-func SetDiskSector(vtxAry, normAry, texAry mat32.ArrayF32, idxAry mat32.ArrayU32, vtxOff, idxOff int, radius float32, segs int, angStart, angLen float32, pos mat32.Vec3) mat32.Box3 {
+func SetDiskSector(vertexArray, normArray, textureArray math32.ArrayF32, indexArray math32.ArrayU32, vtxOff, idxOff int, radius float32, segs int, angStart, angLen float32, pos math32.Vector3) math32.Box3 {
 	// Validate arguments
 	if segs < 3 {
 		panic("Invalid argument: segments. The number of segments needs to be greater or equal to 3.")
 	}
-	angStRad := mat32.DegToRad(angStart)
-	angLenRad := mat32.DegToRad(angLen)
+	angStRad := math32.DegToRad(angStart)
+	angLenRad := math32.DegToRad(angLen)
 
 	idx := 0
 	vidx := vtxOff * 3
 	tidx := vtxOff * 2
 
-	bb := mat32.Box3{}
+	bb := math32.Box3{}
 	bb.SetEmpty()
 
 	// center position
 	center := pos
-	vtxAry.SetVec3(vidx, center)
-	var norm mat32.Vec3
+	vertexArray.SetVector3(vidx, center)
+	var norm math32.Vector3
 	norm.Z = 1
-	normAry.SetVec3(vidx, norm)
-	centerUV := mat32.V2(0.5, 0.5)
-	texAry.SetVec2(tidx, centerUV)
+	normArray.SetVector3(vidx, norm)
+	centerUV := math32.Vec2(0.5, 0.5)
+	textureArray.SetVector2(tidx, centerUV)
 	idx++
 
-	var pt mat32.Vec3
+	var pt math32.Vector3
 	// Generate the segments
 	for i := 0; i <= segs; i++ {
 		segment := angStRad + float32(i)/float32(segs)*angLenRad
-		vx := float32(radius * mat32.Cos(segment))
-		vy := float32(radius * mat32.Sin(segment))
+		vx := float32(radius * math32.Cos(segment))
+		vy := float32(radius * math32.Sin(segment))
 		pt.Set(vx, vy, 0)
 		pt.SetAdd(pos)
 
 		// Appends vertex position, norm and uv coordinates
-		vtxAry.Set(vidx+idx*3, vx, vy, 0)
-		normAry.SetVec3(vidx+idx*3, norm)
-		texAry.Set(tidx+idx*2, (vx/radius+1)/2, (vy/radius+1)/2)
+		vertexArray.Set(vidx+idx*3, vx, vy, 0)
+		normArray.SetVector3(vidx+idx*3, norm)
+		textureArray.Set(tidx+idx*2, (vx/radius+1)/2, (vy/radius+1)/2)
 		bb.ExpandByPoint(pt)
 		idx++
 	}
@@ -226,7 +226,7 @@ func SetDiskSector(vtxAry, normAry, texAry mat32.ArrayF32, idxAry mat32.ArrayU32
 	vOff := uint32(vtxOff)
 	ii := idxOff
 	for i := 1; i <= segs; i++ {
-		idxAry.Set(ii, vOff+uint32(i), vOff+uint32(i)+1, vOff) // ctr = last
+		indexArray.Set(ii, vOff+uint32(i), vOff+uint32(i)+1, vOff) // ctr = last
 	}
 	return bb
 }

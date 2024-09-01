@@ -1,16 +1,16 @@
-// Copyright (c) 2022, The Goki Authors. All rights reserved.
+// Copyright (c) 2022, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package vphong
 
-//go:generate goki generate
+//go:generate core generate
 
 import (
 	"sync"
 
-	"goki.dev/ordmap"
-	"goki.dev/vgpu/v2/vgpu"
+	"cogentcore.org/core/base/ordmap"
+	"cogentcore.org/core/vgpu"
 )
 
 // MaxLights is upper limit on number of any given type of light
@@ -50,7 +50,7 @@ type Phong struct {
 	Spot [MaxLights]SpotLight
 
 	// render using wireframe instead of filled polygons -- this must be set prior to configuring the Phong rendering system
-	Wireframe bool `def:"false"`
+	Wireframe bool `default:"false"`
 
 	// state for current rendering
 	Cur CurRender
@@ -68,7 +68,7 @@ type Phong struct {
 	Sys vgpu.System
 
 	// mutex on updating
-	UpdtMu sync.Mutex `view:"-" copy:"-" json:"-" xml:"-"`
+	UpdateMu sync.Mutex `display:"-" copier:"-" json:"-" xml:"-"`
 }
 
 func (ph *Phong) Destroy() {
@@ -78,32 +78,32 @@ func (ph *Phong) Destroy() {
 // Config configures everything after everything has been Added
 func (ph *Phong) Config() {
 	ph.ConfigMeshesTextures()
-	ph.UpdtMu.Lock()
+	ph.UpdateMu.Lock()
 	ph.Sys.Config()
 
 	ph.ConfigLights()
 	ph.AllocTextures()
 	ph.Sys.Mem.SyncToGPU()
-	ph.UpdtMu.Unlock()
+	ph.UpdateMu.Unlock()
 }
 
 // ConfigMeshesTextures configures the Meshes and Textures based
 // on everything added in the Phong config, prior to Sys.Config()
 // which does host allocation.
 func (ph *Phong) ConfigMeshesTextures() {
-	ph.UpdtMu.Lock()
+	ph.UpdateMu.Lock()
 	ph.Sys.Mem.Free()
 	ph.ConfigMeshes()
 	ph.ConfigTextures()
-	ph.UpdtMu.Unlock()
+	ph.UpdateMu.Unlock()
 }
 
 // Sync synchronizes any changes in val data up to GPU device memory.
 // any changes in numbers or sizes of any element requires a Config call.
 func (ph *Phong) Sync() {
-	ph.UpdtMu.Lock()
+	ph.UpdateMu.Lock()
 	ph.Sys.Mem.SyncToGPU()
-	ph.UpdtMu.Unlock()
+	ph.UpdateMu.Unlock()
 }
 
 ///////////////////////////////////////////////////
@@ -111,7 +111,7 @@ func (ph *Phong) Sync() {
 
 // Render does one step of rendering given current Use* settings
 func (ph *Phong) Render() {
-	ph.UpdtMu.Lock()
+	ph.UpdateMu.Lock()
 	sy := &ph.Sys
 	cmd := sy.CmdPool.Buff
 	sy.CmdBindVars(cmd, 0) // updates all dynamics
@@ -123,5 +123,5 @@ func (ph *Phong) Render() {
 	default:
 		ph.RenderOnecolor()
 	}
-	ph.UpdtMu.Unlock()
+	ph.UpdateMu.Unlock()
 }

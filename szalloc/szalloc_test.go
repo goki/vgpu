@@ -1,4 +1,4 @@
-// Copyright (c) 2022, The Goki Authors. All rights reserved.
+// Copyright (c) 2022, Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -9,7 +9,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"goki.dev/mat32/v2"
+	"cogentcore.org/core/math32"
 )
 
 func TestRandSzAlloc(t *testing.T) {
@@ -49,7 +49,7 @@ func TestUniqSzAlloc(t *testing.T) {
 func TestPctWin(t *testing.T) {
 	pct := float32(.7)
 	for u := float32(0); u < 3; u += .1 {
-		pu := mat32.Mod(u*pct, pct)
+		pu := math32.Mod(u*pct, pct)
 		_ = pu
 		// fmt.Printf("u: %g   pu: %g\n", u, pu)
 	}

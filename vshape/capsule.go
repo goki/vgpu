@@ -1,10 +1,10 @@
-// Copyright 2022 The Goki Authors. All rights reserved.
+// Copyright 2022 Cogent Core. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package vshape
 
-import "goki.dev/mat32/v2"
+import "cogentcore.org/core/math32"
 
 // Capsule is a generalized capsule shape: a cylinder with hemisphere end caps.
 // Supports different radii on each end.
@@ -65,26 +65,26 @@ func (cp *Capsule) Defaults() {
 	cp.AngLen = 360
 }
 
-func (cp *Capsule) N() (nVtx, nIdx int) {
-	nVtx, nIdx = CylinderSectorN(cp.RadialSegs, cp.HeightSegs, false, false)
+func (cp *Capsule) N() (numVertex, nIndex int) {
+	numVertex, nIndex = CylinderSectorN(cp.RadialSegs, cp.HeightSegs, false, false)
 	if cp.BotRad > 0 {
 		nv, ni := SphereSectorN(cp.RadialSegs, cp.CapSegs, 90, 90)
-		nVtx += nv
-		nIdx += ni
+		numVertex += nv
+		nIndex += ni
 	}
 	if cp.TopRad > 0 {
 		nv, ni := SphereSectorN(cp.RadialSegs, cp.CapSegs, 0, 90)
-		nVtx += nv
-		nIdx += ni
+		numVertex += nv
+		nIndex += ni
 	}
 	return
 }
 
 // SetCapsuleSector sets points in given allocated arrays
-func (cp *Capsule) Set(vtxAry, normAry, texAry mat32.ArrayF32, idxAry mat32.ArrayU32) {
+func (cp *Capsule) Set(vertexArray, normArray, textureArray math32.ArrayF32, indexArray math32.ArrayU32) {
 	voff := cp.VtxOff
-	ioff := cp.IdxOff
-	cp.CBBox = SetCylinderSector(vtxAry, normAry, texAry, idxAry, voff, ioff, cp.Height, cp.TopRad, cp.BotRad, cp.RadialSegs, cp.HeightSegs, cp.AngStart, cp.AngLen, false, false, cp.Pos)
+	ioff := cp.IndexOff
+	cp.CBBox = SetCylinderSector(vertexArray, normArray, textureArray, indexArray, voff, ioff, cp.Height, cp.TopRad, cp.BotRad, cp.RadialSegs, cp.HeightSegs, cp.AngStart, cp.AngLen, false, false, cp.Pos)
 	nv, ni := CylinderSectorN(cp.RadialSegs, cp.HeightSegs, false, false)
 	voff += nv
 	ioff += ni
@@ -92,7 +92,7 @@ func (cp *Capsule) Set(vtxAry, normAry, texAry mat32.ArrayF32, idxAry mat32.Arra
 	if cp.BotRad > 0 {
 		ps := cp.Pos
 		ps.Y -= cp.Height / 2
-		cbb := SetSphereSector(vtxAry, normAry, texAry, idxAry, voff, ioff, cp.BotRad, cp.RadialSegs, cp.CapSegs, cp.AngStart, cp.AngLen, 90, 90, ps)
+		cbb := SetSphereSector(vertexArray, normArray, textureArray, indexArray, voff, ioff, cp.BotRad, cp.RadialSegs, cp.CapSegs, cp.AngStart, cp.AngLen, 90, 90, ps)
 		cp.CBBox.ExpandByBox(cbb)
 		nv, ni = SphereSectorN(cp.RadialSegs, cp.CapSegs, 90, 90)
 		voff += nv
@@ -101,7 +101,7 @@ func (cp *Capsule) Set(vtxAry, normAry, texAry mat32.ArrayF32, idxAry mat32.Arra
 	if cp.TopRad > 0 {
 		ps := cp.Pos
 		ps.Y += cp.Height / 2
-		cbb := SetSphereSector(vtxAry, normAry, texAry, idxAry, voff, ioff, cp.TopRad, cp.RadialSegs, cp.CapSegs, cp.AngStart, cp.AngLen, 0, 90, ps)
+		cbb := SetSphereSector(vertexArray, normArray, textureArray, indexArray, voff, ioff, cp.TopRad, cp.RadialSegs, cp.CapSegs, cp.AngStart, cp.AngLen, 0, 90, ps)
 		cp.CBBox.ExpandByBox(cbb)
 	}
 }
