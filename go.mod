@@ -10,7 +10,7 @@ require (
 	github.com/goki/kigen v1.0.2
 	github.com/goki/mat32 v1.0.14
 	github.com/goki/mobile v0.0.0-20230629041755-2875892944e8
-	github.com/goki/vulkan v1.0.6
+	github.com/goki/vulkan v1.0.8
 )
 
 require (
