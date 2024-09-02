@@ -1,14 +1,14 @@
 # vGPU: Vulkan GPU Framework for Graphics and Compute, in Go
 
-**Mac Installation prerequisite:** https://vulkan.lunarg.com/sdk/home -- download the Vulkan SDK installer for the mac.  Unfortunately there does not appear to be a full version of this on homebrew -- the `molten-vk` package is not enough by itself.
-
-**IMPORTANT:** This is the `cogentcore` branch that was developed for the [cogentcore](https://github.com/cogentcore/core) framework, which also includes the **gosl** "go as a shader language" package, which converts Go to the HLSL shader language for compilation on the GPU. Cogent Core has now switched to using WebGPU instead of Vulkan, so this Vulkan-based code is **no longer being used or maintained.**
+**IMPORTANT:** This is the `cogentcore` branch that was developed for the [Cogent Core](https://github.com/cogentcore/core) framework, which also includes the **gosl** "go as a shader language" package, which converts Go to the HLSL shader language for compilation on the GPU. Cogent Core has now switched to using [WebGPU](https://github.com/cogentcore/core/tree/main/gpu) instead of Vulkan, so this Vulkan-based code is **no longer being used or maintained.**
 
 The `main` branch of `vgpu` is the original v1 version of vGPU, which works with the original v1 version of [goki](https://github.com/goki/gi).
 
+**Mac Installation prerequisite:** https://vulkan.lunarg.com/sdk/home -- download the Vulkan SDK installer for the mac.  Unfortunately there does not appear to be a full version of this on homebrew -- the `molten-vk` package is not enough by itself.
+
 ## Major design problems with vGPU
 
-In the process of rewriting the WebGPU version in Cogent Core, called `gpu`, much was improved about the overall design and implementation, particularly in these areas:
+In the process of rewriting the WebGPU version in Cogent Core, called [gpu](https://github.com/cogentcore/core/tree/main/gpu), much was improved about the overall design and implementation, particularly in these areas:
 
 1. `vgpu` uses shared memory buffers and a separate `Memory` management system for all values, which requires all values to be sync'd to / from the GPU together, and adds considerable complexity to the overall implementation.  Everything uses dynamic offsets by default.  Later, an even more complex mechanism for splitting the Storage memory into separate chunks was introduced.  In `gpu`, each `Value` has its own buffer by default, and dynamic offset is only optionally enabled for specific Values, and the Value directly manages everything -- much simpler and cleaner.
 
