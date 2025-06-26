@@ -13,8 +13,8 @@ import (
 
 	"cogentcore.org/core/base/timer"
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/vgpu"
-	"cogentcore.org/core/vgpu/gosl/sltype"
+	"goki.dev/vgpu/v2"
+	"goki.dev/vgpu/v2/gosl/sltype"
 )
 
 // note: standard one to use is plain "gosl" which should be go install'd

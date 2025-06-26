@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cogentcore.org/core/vgpu/gosl/alignsl"
-	"cogentcore.org/core/vgpu/gosl/slprint"
+	"goki.dev/vgpu/v2/gosl/alignsl"
+	"goki.dev/vgpu/v2/gosl/slprint"
 	"golang.org/x/tools/go/packages"
 )
 

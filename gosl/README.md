@@ -17,7 +17,7 @@ $ go install golang.org/x/tools/cmd/goimports@latest
 
 To install the `gosl` command, do:
 ```bash
-$ go install cogentcore.org/core/vgpu/gosl@latest
+$ go install goki.dev/vgpu/v2/gosl@latest
 ```
 
 In your Go code, use these comment directives:

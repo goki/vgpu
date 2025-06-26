@@ -9,7 +9,7 @@ import (
 	"log"
 
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/vgpu"
+	"goki.dev/vgpu/v2"
 )
 
 // Mesh records the number of elements in an indexed triangle mesh,

@@ -140,7 +140,7 @@ func CopySlrand() error {
 	hdr := "slrand.hlsl"
 	tofn := filepath.Join(*outDir, hdr)
 
-	pnm := "cogentcore.org/core/vgpu/gosl/slrand"
+	pnm := "goki.dev/vgpu/v2/gosl/slrand"
 
 	pkgs, err := packages.Load(&packages.Config{Mode: packages.NeedName | packages.NeedFiles}, pnm)
 	if err != nil {
