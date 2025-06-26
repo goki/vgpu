@@ -2,7 +2,7 @@
 
 **IMPORTANT:** This is the `cogentcore` branch that was developed for the [Cogent Core](https://github.com/cogentcore/core) framework, which also includes the **gosl** "go as a shader language" package, which converts Go to the HLSL shader language for compilation on the GPU. Cogent Core has now switched to using [WebGPU](https://github.com/cogentcore/core/tree/main/gpu) instead of Vulkan, so this Vulkan-based code is **no longer being used or maintained.**
 
-The `main` branch of `vgpu` is the original v1 version of vGPU, which works with the original v1 version of [goki](https://github.com/goki/gi).
+The `v1` branch of `vgpu` is the original v1 version of vGPU, which works with the original v1 version of [goki](https://github.com/goki/gi).
 
 **Mac Installation prerequisite:** https://vulkan.lunarg.com/sdk/home -- download the Vulkan SDK installer for the mac.  Unfortunately there does not appear to be a full version of this on homebrew -- the `molten-vk` package is not enough by itself.
 
