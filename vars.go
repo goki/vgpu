@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"cogentcore.org/core/base/indent"
-	"cogentcore.org/core/vgpu/szalloc"
+	"goki.dev/vgpu/v2/szalloc"
 
 	vk "github.com/goki/vulkan"
 )

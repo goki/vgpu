@@ -9,7 +9,7 @@ import (
 	"math"
 	"testing"
 
-	"cogentcore.org/core/vgpu/gosl/sltype"
+	"goki.dev/vgpu/v2/gosl/sltype"
 )
 
 // Known Answer Test for values from the DEShawREsearch reference impl

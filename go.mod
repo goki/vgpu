@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.5
 
 require (
-	cogentcore.org/core v0.3.3-0.20240831051617-88df75477149
+	cogentcore.org/core v0.3.12-0.20250626010039-04e294883b0a
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a
 	github.com/goki/vulkan v1.0.8
 	github.com/stretchr/testify v1.9.0
@@ -20,7 +20,7 @@ require (
 	github.com/anthonynsimon/bild v0.13.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/chewxy/math32 v1.10.1 // indirect
-	github.com/cogentcore/webgpu v0.0.0-20240812054109-ca2e8adebe15 // indirect
+	github.com/cogentcore/webgpu v0.23.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect

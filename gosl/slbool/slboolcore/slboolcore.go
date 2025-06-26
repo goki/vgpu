@@ -6,7 +6,7 @@ package slboolcore
 
 import (
 	"cogentcore.org/core/core"
-	"cogentcore.org/core/vgpu/gosl/slbool"
+	"goki.dev/vgpu/v2/gosl/slbool"
 )
 
 func init() {

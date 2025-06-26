@@ -11,7 +11,7 @@ import (
 	"unsafe"
 
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/vgpu"
+	"goki.dev/vgpu/v2"
 )
 
 // FillRect fills given color to render target, to given region.

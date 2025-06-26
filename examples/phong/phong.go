@@ -19,10 +19,10 @@ import (
 	"cogentcore.org/core/math32"
 	vk "github.com/goki/vulkan"
 
-	"cogentcore.org/core/vgpu"
-	"cogentcore.org/core/vgpu/vphong"
-	"cogentcore.org/core/vgpu/vshape"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"goki.dev/vgpu/v2"
+	"goki.dev/vgpu/v2/vphong"
+	"goki.dev/vgpu/v2/vshape"
 )
 
 func init() {

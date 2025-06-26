@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/vgpu/gosl/slrand"
-	"cogentcore.org/core/vgpu/gosl/sltype"
+	"goki.dev/vgpu/v2/gosl/slrand"
+	"goki.dev/vgpu/v2/gosl/sltype"
 )
 
 //gosl:hlsl rand

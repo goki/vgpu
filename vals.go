@@ -12,8 +12,8 @@ import (
 
 	"cogentcore.org/core/enums"
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/vgpu/szalloc"
 	vk "github.com/goki/vulkan"
+	"goki.dev/vgpu/v2/szalloc"
 )
 
 // Value represents a specific value of a Var variable.

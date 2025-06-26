@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/vgpu/gosl/slbool"
+	"goki.dev/vgpu/v2/gosl/slbool"
 )
 
 //gosl:endhlsl basic

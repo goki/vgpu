@@ -11,7 +11,7 @@ import (
 	"log/slog"
 
 	"cogentcore.org/core/math32"
-	"cogentcore.org/core/vgpu"
+	"goki.dev/vgpu/v2"
 )
 
 // Texture has texture image -- stored as image.RGBA for GPU compatibility

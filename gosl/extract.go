@@ -104,9 +104,9 @@ func ExtractGoFiles(files []string) map[string][]byte {
 		olns = append(olns, []byte("package main"))
 		olns = append(olns, []byte(`import (
 	"math"
-	"cogentcore.org/core/vgpu/gosl/slbool"
-	"cogentcore.org/core/vgpu/gosl/slrand"
-	"cogentcore.org/core/vgpu/gosl/sltype"
+	"goki.dev/vgpu/v2/gosl/slbool"
+	"goki.dev/vgpu/v2/gosl/slrand"
+	"goki.dev/vgpu/v2/gosl/sltype"
 )
 `))
 		olns = append(olns, lns...)

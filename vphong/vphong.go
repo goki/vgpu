@@ -10,7 +10,7 @@ import (
 	"sync"
 
 	"cogentcore.org/core/base/ordmap"
-	"cogentcore.org/core/vgpu"
+	"goki.dev/vgpu/v2"
 )
 
 // MaxLights is upper limit on number of any given type of light
